@@ -1,0 +1,76 @@
+# =============================================================================
+# PROJECT METADATA
+# =============================================================================
+project_name: "Project_Name_Here"
+version: "0.1.0"
+description: "Brief description of the model's purpose"
+
+# =============================================================================
+# ENVIRONMENT CONFIGURATION
+# =============================================================================
+# This section handles infrastructure and environment-specific toggles
+env:
+  mode: "dev" # dev, staging, prod
+  seed: 42 # Global seed for reproducibility
+  compute:
+    num_workers: 4
+    gpu_id: 0
+    device: "cpu" # "cpu" or "cuda"
+
+# =============================================================================
+# DATA CONFIGURATION
+# =============================================================================
+# Paths are relative to the project root (resolved by config_loader.py)
+data:
+  raw_path: "data/raw"
+  processed_path: "data/processed"
+  external_path: "data/external"
+
+  # Data Schema & Rules
+  # This block defines the 'Contract' for your preprocessing module
+  schema:
+    input_file: "input_data.csv"
+    target_column: "target_variable"
+    drop_columns: []
+    imputation_rules:
+      # Format: Column_Name: "strategy"
+      Age: "median"
+    encoding_rules:
+      # Format: Column_Name: {value: mapping}
+      Sex: { "male": 0, "female": 1 }
+
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+model:
+  name: "model_identifier"
+  type: "sklearn_random_forest" # Or "xgboost", "pytorch", etc.
+  save_path: "models/artifacts/"
+  # Hyperparameters are grouped here for easy Injection into the Worker class
+  hyperparameters:
+    n_estimators: 100
+    max_depth: 10
+    random_state: 42
+    min_samples_split: 2
+
+# =============================================================================
+# TRAINING / EXECUTION CONFIGURATION
+# =============================================================================
+training:
+  batch_size: 32
+  epochs: 100
+  learning_rate: 0.001
+  early_stopping_patience: 5
+  validation_split: 0.2
+
+# =============================================================================
+# LOGGING & ARTIFACTS
+# =============================================================================
+logging:
+  path: "logs"
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+artifacts:
+  model_name: "base_model_v1"
+  plot_output_path: "logs/plots/"
