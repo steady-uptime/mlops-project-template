@@ -1,83 +1,32 @@
-# ============================
-# Environment
-# ============================
+.PHONY: install run train evaluate predict test
 
-.PHONY: install
+# Install dependencies
+# This remains a shell command as it interacts with the system package manager/pip
 install:
-    pip install -r requirements.txt
+	pip install -r requirements.txt
 
-.PHONY: format
-format:
-    black src
+# Orchestrate the full pipeline
+# Executes the main pipeline module
+run:
+	python -m scripts.run_pipeline
 
-.PHONY: lint
-lint:
-    pylint src
-
-.PHONY: typecheck
-typecheck:
-    mypy src
-
-# ============================
-# Data
-# ============================
-
-.PHONY: data
-data:
-    python src/data/make_dataset.py
-
-# ============================
-# Training & Evaluation
-# ============================
-
-.PHONY: train
+# Model Engineering: Training
+# Executes the training module
 train:
-    python src/pipelines/train.py --config configs/training.yaml
+	python -m scripts.train
 
-.PHONY: evaluate
+# Model Engineering: Evaluation
+# Executes the evaluation module
 evaluate:
-    python src/pipelines/evaluate.py --config configs/model.yaml
+	python -m scripts.evaluate
 
-# ============================
-# Testing
-# ============================
+# Model Engineering: Inference
+# Executes the prediction module
+predict:
+	python -m scripts.predict
 
-.PHONY: test
+# Quality Assurance: Unit & Integration Tests
+# pytest is called as a binary tool
 test:
-    pytest -q
-
-# ============================
-# Docker
-# ============================
-
-.PHONY: docker-build
-docker-build:
-    docker build -t project-image -f docker/Dockerfile .
-
-.PHONY: docker-run
-docker-run:
-    docker run -p 8000:8000 project-image
-
-.PHONY: docker-compose
-docker-compose:
-    docker-compose -f docker/docker-compose.yaml up
-
-# ============================
-# Kubernetes
-# ============================
-
-.PHONY: k8s-apply
-k8s-apply:
-    kubectl apply -f k8s/
-
-.PHONY: k8s-delete
-k8s-delete:
-    kubectl delete -f k8s/
-
-# ============================
-# Utility
-# ============================
-
-.PHONY: clean
-clean:
-    rm -rf __pycache__ */__pycache__ .pytest_cache
+	pytest -q
+    

@@ -13,3 +13,6 @@ loguru>=0.7.3
 # Visualization (Optional but helpful for notebooks)
 matplotlib>=3.10.9
 seaborn>=0.13.2
+
+# Testing
+pytest>=9.1.1

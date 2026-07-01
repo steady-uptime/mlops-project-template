@@ -1,76 +1,111 @@
-# =============================================================================
+# configs/config.yaml
 # PROJECT METADATA
-# =============================================================================
-project_name: "Project_Name_Here"
-version: "0.1.0"
-description: "Brief description of the model's purpose"
+# ---------------------------------------------------------
+# TODO: Update project_name and version for your specific use case.
+project_name: "Generic_ML_Pipeline_Template"
+version: "1.0.0"
 
-# =============================================================================
-# ENVIRONMENT CONFIGURATION
-# =============================================================================
-# This section handles infrastructure and environment-specific toggles
+# ENVIRONMENT & RESOURCE ALLOCATION
+# ---------------------------------------------------------
+# Defines the compute environment. Use env_mapping to override these 
+# values via environment variables in production (e.g., K8s ConfigMaps).
 env:
-  mode: "dev" # dev, staging, prod
-  seed: 42 # Global seed for reproducibility
+  mode: "dev" # Options: dev, staging, prod
   compute:
     num_workers: 4
     gpu_id: 0
-    device: "cpu" # "cpu" or "cuda"
+    memory_limit_gb: 16
 
-# =============================================================================
-# DATA CONFIGURATION
-# =============================================================================
-# Paths are relative to the project root (resolved by config_loader.py)
+# ENVIRONMENT VARIABLE MAPPING
+# ---------------------------------------------------------
+# This maps OS Environment Variables to the internal configuration keys.
+# This follows the "Single Source of Truth" principle.
+env_mapping:
+  DATA_PATH: ["paths", "raw_data"]
+  MODEL_PATH: ["paths", "models"]
+  LOG_LEVEL: ["logging", "level"]
+  BATCH_SIZE: ["training", "batch_size"]
+  LEARNING_RATE: ["training", "learning_rate"]
+  ENV_MODE: ["env", "mode"]
+
+# INFRASTRUCTURE LAYER (Pathing Contract)
+# ---------------------------------------------------------
+# Use pathlib to resolve these paths dynamically. 
+# DO NOT use absolute paths.
+paths:
+  raw_data: "data/raw"
+  processed_data: "data/processed"
+  external_data: "data/external"
+  models: "models/artifacts"
+  logs: "logs"
+
+# DATA ENGINEERING LAYER (Logic & Schema)
+# ---------------------------------------------------------
+# TODO: Update these fields to match your specific dataset.
+# This section defines the contract between the Data Loader and the Preprocessor.
 data:
-  raw_path: "data/raw"
-  processed_path: "data/processed"
-  external_path: "data/external"
-
-  # Data Schema & Rules
-  # This block defines the 'Contract' for your preprocessing module
-  schema:
-    input_file: "input_data.csv"
-    target_column: "target_variable"
-    drop_columns: []
+  target_column: "target_variable" # Replace with your target
+  split_config:
+    test_size: 0.2
+    random_state: 42
+  
+  preprocessing:
+    # Columns to be removed during the ETL phase
+    drop_columns: ["id_column", "metadata_column"] 
+    
+    # Imputation strategy for numerical/categorical missing values
     imputation_rules:
-      # Format: Column_Name: "strategy"
-      Age: "median"
+      feature_1: "median"
+      feature_2: "mean"
+    
+    # Mapping for categorical variables to integers/floats
     encoding_rules:
-      # Format: Column_Name: {value: mapping}
-      Sex: { "male": 0, "female": 1 }
+      category_a: {"val_1": 0, "val_2": 1}
+      category_b: {"val_3": 0, "val_4": 1}
 
-# =============================================================================
-# MODEL CONFIGURATION
-# =============================================================================
+  # DATA SCHEMA VALIDATION
+  # Used by src/data_processing/validator.py to ensure data integrity.
+  schema:
+    - column: "id_column"
+      type: "int64"
+    - column: "target_variable"
+      type: "int64"
+    - column: "feature_1"
+      type: "float64"
+    - column: "category_a"
+      type: "object"
+
+# ARTIFACT MANAGEMENT
+# ---------------------------------------------------------
+# Defines the input/output filenames for the pipeline execution.
+artifacts:
+  input_file: "input_data.csv"
+  output_file: "processed_data.csv"
+  base_path: "models/artifacts"
+
+# MODEL ENGINEERING LAYER
+# ---------------------------------------------------------
+# Configuration for the Model Worker.
 model:
-  name: "model_identifier"
-  type: "sklearn_random_forest" # Or "xgboost", "pytorch", etc.
-  save_path: "models/artifacts/"
-  # Hyperparameters are grouped here for easy Injection into the Worker class
-  hyperparameters:
+  name: "random_forest_classifier"
+  type: "sklearn"
+  params:
     n_estimators: 100
     max_depth: 10
     random_state: 42
-    min_samples_split: 2
 
-# =============================================================================
-# TRAINING / EXECUTION CONFIGURATION
-# =============================================================================
+# TRAINING HYPERPARAMETERS
+# ---------------------------------------------------------
 training:
+  learning_rate: 0.001
   batch_size: 32
   epochs: 100
-  learning_rate: 0.001
-  early_stopping_patience: 5
-  validation_split: 0.2
 
-# =============================================================================
-# LOGGING & ARTIFACTS
-# =============================================================================
+# OBSERVABILITY LAYER
+# ---------------------------------------------------------
+# Configures the Loguru structured logging.
 logging:
-  path: "logs"
-  level: "INFO"
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-artifacts:
-  model_name: "base_model_v1"
-  plot_output_path: "logs/plots/"
+  file_path: "logs/pipeline.log"
+  level: "DEBUG"
+  rotation: "500 MB"
+  retention: "10 days"
